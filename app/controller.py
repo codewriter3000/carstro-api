@@ -7,6 +7,8 @@ import sys
 
 
 def check_if_username_exists(username):
+    exists = False
+
     conn = connect()
     cursor = conn.cursor()
 
@@ -14,12 +16,14 @@ def check_if_username_exists(username):
     result = cursor.fetchone()
 
     if len(result) > 0:
-        raise HTTPException(status_code=400, detail='Username already exists')
+        exists = True
 
     conn.commit()
 
     cursor.close()
     conn.close()
+
+    return exists
 
 
 def register_user(username, password, first_name, last_name, test=False):
@@ -28,6 +32,9 @@ def register_user(username, password, first_name, last_name, test=False):
 
     if len(username) < 3 or len(username) > 20:
         raise HTTPException(status_code=400, detail='Username must be between 3 and 20 characters')
+    
+    if check_if_username_exists(username):
+        raise HTTPException(status_code=400, detail='Username already exists')
 
     if len(password) < 8:
         raise HTTPException(status_code=400, detail='Password must be at least 8 characters')

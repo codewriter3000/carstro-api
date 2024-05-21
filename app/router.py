@@ -1,11 +1,15 @@
 from fastapi import APIRouter
+from . import controller
 
 router = APIRouter()
 
 
 @router.post('/user/create')
-async def register_user():
-    pass
+async def register_user(params):
+    return controller.register_user(params.username, 
+                                    params.password, 
+                                    params.first_name, 
+                                    params.last_name)
 
 @router.post('/user/login')
 async def login_user():

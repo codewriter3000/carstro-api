@@ -19,8 +19,3 @@ def migrate():
 
     cursor.close()
     conn.close()
-
-if __name__ == '__main__':
-    if sys.argv[1] == 'migrate':
-        migrate()
-

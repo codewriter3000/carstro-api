@@ -15,8 +15,11 @@ async def register_user(body: Request):
                                     payload['last_name'])
 
 @router.post('/user/login')
-async def login_user():
-    pass
+async def login_user(body: Request):
+    payload = await body.json()
+
+    return controller.login_user(payload['username'],
+                                 payload['password'])
 
 @router.get('/users/list')
 async def list_users():

@@ -4,6 +4,7 @@ from fastapi import HTTPException
 
 import secrets
 import sys
+import base64
 
 
 def check_if_username_exists(username):
@@ -99,6 +100,28 @@ def register_user(username, password, first_name, last_name, test=False):
 
     return {'username': username, 'first_name': first_name, 'last_name': last_name}
 
+def login_user(username, password):
+    conn = connect()
+    cursor = conn.cursor()
+
+    cursor.execute('SELECT * FROM users WHERE username = %s', (username,))
+    result = cursor.fetchone()
+
+    hashed_password = base64.b64decode(result[2])
+    salt = base64.b64decode(result[3])
+
+    print(hashed_password)
+    print(salt)
+
+    if pbkdf2_sha256.verify(str.join(str.strip(password), str.strip(salt)), hashed_password):
+        return {'message': 'Login successful'}
+    else:
+        raise HTTPException(status_code=401, detail='Invalid login attempt')
+
+    cursor.close()
+    conn.close()
+
+    print(result)
 
 if __name__ == '__main__':
     if sys.argv[1] == 'register_user':

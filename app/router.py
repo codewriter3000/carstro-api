@@ -9,7 +9,7 @@ async def register_user(body: Request):
     payload = await body.json()
 
     print(payload)
-    return await controller.register_user(payload['username'], 
+    return controller.register_user(payload['username'], 
                                     payload['password'], 
                                     payload['first_name'], 
                                     payload['last_name'])

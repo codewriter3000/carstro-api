@@ -89,12 +89,15 @@ def register_user(username, password, first_name, last_name, test=False):
 
         print('SQL query')
         print(f'{hashed_password}: {len(hashed_password)}')
+        print(f'{salt}: {len(salt)}')
         cursor.execute('INSERT INTO users(username, password_digest, password_salt, first_name, last_name) VALUES (%s, %s, %s, %s, %s);', (username, hashed_password, salt, first_name, last_name))
 
         conn.commit()
 
         cursor.close()
         conn.close()
+
+    return {'username': username, 'first_name': first_name, 'last_name': last_name}
 
 
 if __name__ == '__main__':

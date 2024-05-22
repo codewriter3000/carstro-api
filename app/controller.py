@@ -12,10 +12,10 @@ def check_if_username_exists(username):
     conn = connect()
     cursor = conn.cursor()
 
-    cursor.execute('SELECT username FROM users WHERE username = ?', username)
+    cursor.execute('SELECT username FROM users WHERE username = %s;', (username,))
     result = cursor.fetchone()
 
-    if len(result) > 0:
+    if result is not None:
         exists = True
 
     conn.commit()
@@ -87,7 +87,9 @@ def register_user(username, password, first_name, last_name, test=False):
         conn = connect()
         cursor = conn.cursor()
 
-        cursor.execute('INSERT INTO users(username, password_digest, password_salt, first_name, last_name) VALUES (?, ?, ?, ?, ?);', username, hashed_password, salt, first_name, last_name)
+        print('SQL query')
+        print(f'{hashed_password}: {len(hashed_password)}')
+        cursor.execute('INSERT INTO users(username, password_digest, password_salt, first_name, last_name) VALUES (%s, %s, %s, %s, %s);', (username, hashed_password, salt, first_name, last_name))
 
         conn.commit()
 

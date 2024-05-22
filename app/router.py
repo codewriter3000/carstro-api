@@ -1,15 +1,18 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from . import controller
 
 router = APIRouter()
 
 
 @router.post('/user/create')
-async def register_user(params):
-    return controller.register_user(params.username, 
-                                    params.password, 
-                                    params.first_name, 
-                                    params.last_name)
+async def register_user(body: Request):
+    payload = await body.json()
+
+    print(payload)
+    return await controller.register_user(payload['username'], 
+                                    payload['password'], 
+                                    payload['first_name'], 
+                                    payload['last_name'])
 
 @router.post('/user/login')
 async def login_user():

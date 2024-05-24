@@ -1,10 +1,13 @@
+import secrets
+import sys
 from passlib.hash import pbkdf2_sha256
 from .model import connect
 from fastapi import HTTPException
+from dotenv import dotenv_values
+from auth.auth_handler import sign_jwt
+config = dotenv_values('.env')
 
-import secrets
-import sys
-import base64
+SECRET_KEY = config['SECRET_KEY']
 
 
 def check_if_username_exists(username):
@@ -72,8 +75,6 @@ def register_user(username, password, first_name, last_name, test=False):
     salt = secrets.token_urlsafe(8)
     hashed_password = pbkdf2_sha256.hash(str.join(password, salt))
 
-
-
     if test:
         print(f'Hashed password: {hashed_password}')
 
@@ -88,9 +89,6 @@ def register_user(username, password, first_name, last_name, test=False):
         conn = connect()
         cursor = conn.cursor()
 
-        print('SQL query')
-        print(f'{hashed_password}: {len(hashed_password)}')
-        print(f'{salt}: {len(salt)}')
         cursor.execute('INSERT INTO users(username, password_digest, password_salt, first_name, last_name) VALUES (%s, %s, %s, %s, %s);', (username, hashed_password, salt, first_name, last_name))
 
         conn.commit()
@@ -100,6 +98,7 @@ def register_user(username, password, first_name, last_name, test=False):
 
     return {'username': username, 'first_name': first_name, 'last_name': last_name}
 
+
 def login_user(username, password):
     conn = connect()
     cursor = conn.cursor()
@@ -107,21 +106,17 @@ def login_user(username, password):
     cursor.execute('SELECT * FROM users WHERE username = %s', (username,))
     result = cursor.fetchone()
 
-    hashed_password = base64.b64decode(result[2])
-    salt = base64.b64decode(result[3])
-
-    print(hashed_password)
-    print(salt)
-
-    if pbkdf2_sha256.verify(str.join(str.strip(password), str.strip(salt)), hashed_password):
-        return {'message': 'Login successful'}
-    else:
-        raise HTTPException(status_code=401, detail='Invalid login attempt')
+    hashed_password = result[2]
+    salt = result[3]
 
     cursor.close()
     conn.close()
 
-    print(result)
+    if pbkdf2_sha256.verify(str.join(password, salt), hashed_password):
+        return sign_jwt(username, hashed_password)
+    else:
+        raise HTTPException(status_code=401, detail='Invalid login attempt')
+
 
 if __name__ == '__main__':
     if sys.argv[1] == 'register_user':

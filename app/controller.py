@@ -30,7 +30,7 @@ def check_if_username_exists(username):
     return exists
 
 
-def register_user(username, password, first_name, last_name, test=False):
+def register_user(username, password, first_name, last_name, is_admin=False, test=False):
     if username is None or password is None or first_name is None or last_name is None:
         raise HTTPException(status_code=400, detail='Missing required field')
 
@@ -89,7 +89,7 @@ def register_user(username, password, first_name, last_name, test=False):
         conn = connect()
         cursor = conn.cursor()
 
-        cursor.execute('INSERT INTO users(username, password_digest, password_salt, first_name, last_name) VALUES (%s, %s, %s, %s, %s);', (username, hashed_password, salt, first_name, last_name))
+        cursor.execute('INSERT INTO users(username, password_digest, password_salt, first_name, last_name, is_admin) VALUES (%s, %s, %s, %s, %s, %s);', (username, hashed_password, salt, first_name, last_name, is_admin))
 
         conn.commit()
 
@@ -106,6 +106,7 @@ def login_user(username, password):
     cursor.execute('SELECT * FROM users WHERE username = %s', (username,))
     result = cursor.fetchone()
 
+    is_admin = result[6]
     hashed_password = result[2]
     salt = result[3]
 
@@ -113,7 +114,7 @@ def login_user(username, password):
     conn.close()
 
     if pbkdf2_sha256.verify(str.join(password, salt), hashed_password):
-        return sign_jwt(username, hashed_password)
+        return sign_jwt(username, hashed_password, is_admin)
     else:
         raise HTTPException(status_code=401, detail='Invalid login attempt')
 

@@ -2,11 +2,12 @@ from fastapi import APIRouter, Request, Cookie, Depends
 from typing import Annotated, Union
 from . import controller
 from auth.auth_bearer import JWTBearer, JWTBearerAdmin
+from .controller import list_all_users, get_user_by_user_id
 
 router = APIRouter()
 
 
-@router.post('/user/create', dependencies=[Depends(JWTBearerAdmin())])
+@router.post('/user/create') #, dependencies=[Depends(JWTBearerAdmin())])
 async def register_user(body: Request):
     payload = await body.json()
     if payload['is_admin']:
@@ -40,23 +41,23 @@ async def check_admin_authentication_status():
     return {'message': 'Verified'}
 
 
-@router.get('/users/list', dependencies=[Depends(JWTBearerAdmin())])
+@router.get('/users/list')#, dependencies=[Depends(JWTBearerAdmin())])
 async def list_users():
-    pass
+    return list_all_users()
 
 
 @router.get('/users/{user_id}', dependencies=[Depends(JWTBearerAdmin())])
-async def get_user():
-    pass
+async def get_user(user_id: int):
+    return get_user_by_user_id(user_id)
 
 
-@router.put('/users/{user_id}', dependencies=[Depends(JWTBearerAdmin())])
-async def update_user():
-    pass
+@router.put('/users/{user_id}')#, dependencies=[Depends(JWTBearerAdmin())])
+async def update_user(user_id: int):
+    return await update_user(user_id)
 
 
-@router.delete('/users/{user_id"', dependencies=[Depends(JWTBearerAdmin())])
-async def delete_user():
+@router.delete('/users/{user_id}"')#, dependencies=[Depends(JWTBearerAdmin())])
+async def delete_user(user_id: int):
     pass
 
 

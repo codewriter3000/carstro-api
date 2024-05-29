@@ -31,6 +31,11 @@ async def login_user(body: Request):
                                  payload['password'])
 
 
+@router.post('/user/logout')
+async def logout_user():
+    pass
+
+
 @router.get('/user/auth', dependencies=[Depends(JWTBearer())])
 async def check_authentication_status():
     return {'message': 'Verified'}

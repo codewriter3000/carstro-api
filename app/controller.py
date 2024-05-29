@@ -157,18 +157,6 @@ def login_user(username, password):
         raise HTTPException(status_code=401, detail='Invalid login attempt')
 
 
-def logout_user(token):
-    conn = connect()
-    cursor = conn.cursor()
-
-    cursor.execute('UPDATE jwts SET is_valid = FALSE WHERE token = %s;', (token,))
-
-    conn.commit()
-
-    cursor.close()
-    conn.close()
-
-
 def list_all_users():
     conn = connect()
     cursor = conn.cursor()

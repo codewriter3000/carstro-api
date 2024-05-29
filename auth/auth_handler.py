@@ -9,12 +9,15 @@ SECRET_KEY = config['SECRET_KEY']
 
 
 def sign_jwt(username, password, is_admin):
+    expiration = time.time() + 600
+
     data = jsonable_encoder({'username': username, 'password': password,
-                             'expires': time.time() + 600, 'is_admin': is_admin})
+                             'expiration': expiration, 'is_admin': is_admin})
     encoded_jwt = jwt.encode(data, SECRET_KEY, algorithm='HS256')
 
     return {
         'token': encoded_jwt,
+        'expiration': expiration,
     }
 
 

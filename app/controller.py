@@ -139,16 +139,41 @@ def login_user(username, password):
         raise HTTPException(status_code=401, detail='User account is disabled')
 
     if pbkdf2_sha256.verify(str.join(password, salt), hashed_password):
-        return sign_jwt(username, hashed_password, is_admin)
+        signed_jwt = sign_jwt(username, hashed_password, is_admin)
+
+        conn = connect()
+        cursor = conn.cursor()
+
+        cursor.execute('INSERT INTO jwts(token, expiration) VALUES (%s, %s);',
+                       (signed_jwt['token'], signed_jwt['expiration']))
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return signed_jwt
     else:
         raise HTTPException(status_code=401, detail='Invalid login attempt')
+
+
+def logout_user(token):
+    conn = connect()
+    cursor = conn.cursor()
+
+    cursor.execute('UPDATE jwts SET is_valid = FALSE WHERE token = %s;', (token,))
+
+    conn.commit()
+
+    cursor.close()
+    conn.close()
 
 
 def list_all_users():
     conn = connect()
     cursor = conn.cursor()
 
-    cursor.execute('SELECT * FROM users;')
+    cursor.execute('SELECT * FROM users ORDER BY id;')
     result = cursor.fetchall()
 
     cursor.close()

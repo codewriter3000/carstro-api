@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from dotenv import dotenv_values
 from auth.auth_handler import sign_jwt
 import re
+
 config = dotenv_values('.env')
 
 SECRET_KEY = config['SECRET_KEY']
@@ -45,7 +46,7 @@ def register_user(username, password, first_name, last_name, is_admin=False, tes
 
     if len(username) < 3 or len(username) > 20:
         raise HTTPException(status_code=400, detail='Username must be between 3 and 20 characters')
-    
+
     if check_if_username_exists(username):
         raise HTTPException(status_code=400, detail='Username already exists')
 
@@ -77,7 +78,7 @@ def register_user(username, password, first_name, last_name, is_admin=False, tes
 
         if password[ch] in '`~!@#$%^&*()_-+=|\\]}[{\'";:/?.>,<':
             has_special = True
-    
+
     if not has_capital:
         raise HTTPException(status_code=400, detail='Password must contain at least 1 capital letter')
 
@@ -102,12 +103,14 @@ def register_user(username, password, first_name, last_name, is_admin=False, tes
         # Expecting False
         print(pbkdf2_sha256.verify(password, hashed_password))
         print(pbkdf2_sha256.verify(str.join('P@ss', salt), hashed_password))
-    
+
     else:
         conn = connect()
         cursor = conn.cursor()
 
-        cursor.execute('INSERT INTO users(username, password_digest, password_salt, first_name, last_name, is_admin) VALUES (%s, %s, %s, %s, %s, %s);', (username, hashed_password, salt, first_name, last_name, is_admin))
+        cursor.execute(
+            'INSERT INTO users(username, password_digest, password_salt, first_name, last_name, is_admin, is_enabled) VALUES (%s, %s, %s, %s, %s, %s);',
+            (username, hashed_password, salt, first_name, last_name, is_admin))
 
         conn.commit()
 
@@ -127,9 +130,13 @@ def login_user(username, password):
     is_admin = result[6]
     hashed_password = result[2]
     salt = result[3]
+    is_enabled = result[7]
 
     cursor.close()
     conn.close()
+
+    if not is_enabled:
+        raise HTTPException(status_code=401, detail='User account is disabled')
 
     if pbkdf2_sha256.verify(str.join(password, salt), hashed_password):
         return sign_jwt(username, hashed_password, is_admin)
@@ -163,24 +170,33 @@ def get_user_by_user_id(user_id):
     return result
 
 
-async def update_user(user_id, user_data):
+def update_user_by_id(user_id, username, first_name, last_name, is_admin, is_enabled):
     conn = connect()
     cursor = conn.cursor()
 
-    await cursor.execute('UPDATE users SET username = %s, first_name = %s, last_name = %s WHERE id = %s;',
-                   (user_data['username'], user_data['first_name'], user_data['last_name'], user_id,))
+    cursor.execute('UPDATE users SET username = %s, first_name = %s, last_name = %s, is_admin = %s, is_enabled = %s WHERE id = %s;',
+                   (username, first_name, last_name, is_admin, is_enabled, user_id,))
+
+    conn.commit()
 
     cursor.close()
     conn.close()
 
-    return user_data
+    return {
+        username: username,
+        first_name: first_name,
+        last_name: last_name,
+        is_admin: is_admin,
+    }
 
 
-def delete_user(user_id):
+def delete_user_by_id(user_id):
     conn = connect()
     cursor = conn.cursor()
 
-    cursor.execute('DELETE FROM users WHERE user_id = %s', (user_id,))
+    cursor.execute('DELETE FROM users WHERE id = %s;', (user_id,))
+
+    conn.commit()
 
     cursor.close()
     conn.close()

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request, Cookie, Depends
 from typing import Annotated, Union
 from . import controller
 from auth.auth_bearer import JWTBearer, JWTBearerAdmin
-from .controller import list_all_users, get_user_by_user_id
+from .controller import list_all_users, get_user_by_user_id, update_user_by_id, delete_user_by_id
 
 router = APIRouter()
 
@@ -52,13 +52,21 @@ async def get_user(user_id: int):
 
 
 @router.put('/users/{user_id}')#, dependencies=[Depends(JWTBearerAdmin())])
-async def update_user(user_id: int):
-    return await update_user(user_id)
+async def update_user(user_id: int, body: Request):
+    payload = await body.json()
+
+    print(payload)
+
+    return update_user_by_id(user_id, payload['username'],
+                             payload['first_name'],
+                             payload['last_name'],
+                             payload['is_admin'],
+                             payload['is_enabled'])
 
 
-@router.delete('/users/{user_id}"')#, dependencies=[Depends(JWTBearerAdmin())])
+@router.delete('/users/{user_id}')#, dependencies=[Depends(JWTBearerAdmin())])
 async def delete_user(user_id: int):
-    pass
+    return delete_user_by_id(user_id)
 
 
 @router.post('/role', dependencies=[Depends(JWTBearerAdmin())])

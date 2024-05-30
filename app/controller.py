@@ -141,17 +141,6 @@ def login_user(username, password):
     if pbkdf2_sha256.verify(str.join(password, salt), hashed_password):
         signed_jwt = sign_jwt(username, hashed_password, is_admin)
 
-        conn = connect()
-        cursor = conn.cursor()
-
-        cursor.execute('INSERT INTO jwts(token, expiration) VALUES (%s, %s);',
-                       (signed_jwt['token'], signed_jwt['expiration']))
-
-        conn.commit()
-
-        cursor.close()
-        conn.close()
-
         return signed_jwt
     else:
         raise HTTPException(status_code=401, detail='Invalid login attempt')

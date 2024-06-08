@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app import router
+from app import router, cookies
 from dotenv import dotenv_values
 config = dotenv_values('.env')
 
@@ -23,3 +23,4 @@ app.add_middleware(
 
 
 app.include_router(router.router)
+app.include_router(cookies.router)

@@ -33,7 +33,7 @@ async def login_user(body: Request):
 
 @router.post('/user/logout')
 async def logout_user():
-    pass
+    return controller.logout_user()
 
 
 @router.get('/user/auth', dependencies=[Depends(JWTBearer())])

@@ -19,17 +19,13 @@ def verify_jwt(token):
 
 
 def verify_jwt_admin(token):
-    is_token_valid = False
-
     try:
         payload = decode_jwt_admin(token)
     except:
-        payload = None
+        payload = {'is_valid': False,
+                   'message': 'Unknown error while decoding payload'}
 
-    if payload:
-        is_token_valid = True
-
-    return is_token_valid
+    return payload
 
 
 class JWTBearer(HTTPBearer):
@@ -57,8 +53,10 @@ class JWTBearerAdmin(HTTPBearer):
         if credentials:
             if not credentials.scheme == "Bearer":
                 raise HTTPException(status_code=403, detail="Invalid authentication scheme.")
-            if not verify_jwt_admin(credentials.credentials):
-                raise HTTPException(status_code=403, detail="Invalid token or expired token.")
+            jwt = verify_jwt_admin(credentials.credentials)
+            print(jwt)
+            if not jwt['is_valid']:
+                raise HTTPException(status_code=403, detail=jwt['message'])
             return credentials.credentials
         else:
             raise HTTPException(status_code=403, detail="Invalid authorization code.")

@@ -9,7 +9,7 @@ SECRET_KEY = config['SECRET_KEY']
 
 
 def sign_jwt(username, password, is_admin):
-    expiration = time.time() + 600
+    expiration = time.time() + 86400
 
     data = jsonable_encoder({'username': username, 'password': password,
                              'expiration': expiration, 'is_admin': is_admin})
@@ -31,10 +31,20 @@ def decode_jwt(token):
 
 def decode_jwt_admin(token):
     try:
-        print(token)
         decoded_token = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-        print(decoded_token['is_admin'])
-        return decoded_token if decoded_token['expires'] >= time.time() and decoded_token['is_admin'] else None
+
+        print(decoded_token)
+
+        if decoded_token['expiration'] >= time.time():
+            return {'is_valid': False, 'message': 'Session expired'}
+
+        if decoded_token['is_admin']:
+            decoded_token['is_valid'] = True
+            return decoded_token
+        else:
+            print('not admin')
+            return {'is_valid': False,
+                    'message': 'This is for administrators only'}
+
     except:
-        print('exception')
-        return {}
+        return {'is_valid': False, 'message': 'Unknown error occurred'}

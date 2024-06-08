@@ -1,6 +1,8 @@
 import secrets
 import sys
 from passlib.hash import pbkdf2_sha256
+from fastapi.responses import JSONResponse
+
 from .model import connect
 from fastapi import HTTPException
 from dotenv import dotenv_values
@@ -94,28 +96,17 @@ def register_user(username, password, first_name, last_name, is_admin=False, tes
     salt = secrets.token_urlsafe(8)
     hashed_password = pbkdf2_sha256.hash(str.join(password, salt))
 
-    if test:
-        print(f'Hashed password: {hashed_password}')
+    conn = connect()
+    cursor = conn.cursor()
 
-        # Expecting True
-        print(pbkdf2_sha256.verify(str.join(password, salt), hashed_password))
+    cursor.execute(
+        'INSERT INTO users(username, password_digest, password_salt, first_name, last_name, is_admin, is_enabled) VALUES (%s, %s, %s, %s, %s, %s);',
+        (username, hashed_password, salt, first_name, last_name, is_admin))
 
-        # Expecting False
-        print(pbkdf2_sha256.verify(password, hashed_password))
-        print(pbkdf2_sha256.verify(str.join('P@ss', salt), hashed_password))
+    conn.commit()
 
-    else:
-        conn = connect()
-        cursor = conn.cursor()
-
-        cursor.execute(
-            'INSERT INTO users(username, password_digest, password_salt, first_name, last_name, is_admin, is_enabled) VALUES (%s, %s, %s, %s, %s, %s);',
-            (username, hashed_password, salt, first_name, last_name, is_admin))
-
-        conn.commit()
-
-        cursor.close()
-        conn.close()
+    cursor.close()
+    conn.close()
 
     return {'username': username, 'first_name': first_name, 'last_name': last_name}
 
@@ -141,9 +132,20 @@ def login_user(username, password):
     if pbkdf2_sha256.verify(str.join(password, salt), hashed_password):
         signed_jwt = sign_jwt(username, hashed_password, is_admin)
 
-        return signed_jwt
+        response = JSONResponse(content={'token': signed_jwt, 'token_type': 'Bearer'})
+        response.set_cookie(key='token', value=signed_jwt['token'], httponly=True)
+
+        return response
     else:
         raise HTTPException(status_code=401, detail='Invalid login attempt')
+
+
+def logout_user():
+    response = JSONResponse(content={'message': 'Logged out successfully'})
+    response.set_cookie(key='token', value='', httponly=True)
+    print('user logged out')
+
+    return response
 
 
 def list_all_users():
@@ -204,8 +206,3 @@ def delete_user_by_id(user_id):
     conn.close()
 
     return {'message': f'User with ID: {user_id} deleted'}
-
-
-if __name__ == '__main__':
-    if sys.argv[1] == 'register_user':
-        register_user('test_user', 'P@ssword123', 'Test', 'User', test=True)

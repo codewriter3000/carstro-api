@@ -42,7 +42,7 @@ def check_if_field_is_alphabetical(field):
     return re.match('^[A-Za-z]+$', field)
 
 
-def register_user(username, password, first_name, last_name, is_admin=False, test=False):
+def register_user(username, password, first_name, last_name, is_admin=False, is_enabled=True, test=False):
     if username is None or password is None or first_name is None or last_name is None:
         raise HTTPException(status_code=400, detail='Missing required field')
 
@@ -100,8 +100,8 @@ def register_user(username, password, first_name, last_name, is_admin=False, tes
     cursor = conn.cursor()
 
     cursor.execute(
-        'INSERT INTO users(username, password_digest, password_salt, first_name, last_name, is_admin, is_enabled) VALUES (%s, %s, %s, %s, %s, %s);',
-        (username, hashed_password, salt, first_name, last_name, is_admin))
+        'INSERT INTO users(username, password_digest, password_salt, first_name, last_name, is_admin, is_enabled) VALUES (%s, %s, %s, %s, %s, %s, %s);',
+        (username, hashed_password, salt, first_name, last_name, is_admin, is_enabled))
 
     conn.commit()
 
@@ -117,6 +117,9 @@ def login_user(username, password):
 
     cursor.execute('SELECT * FROM users WHERE username = %s;', (username,))
     result = cursor.fetchone()
+
+    if not result:
+        raise HTTPException(status_code=401, detail='Invalid username/password combination')
 
     is_admin = result[6]
     hashed_password = result[2]

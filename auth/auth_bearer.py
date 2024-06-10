@@ -1,4 +1,5 @@
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from jwt.exceptions import DecodeError
 from fastapi import Request, HTTPException
 
 from auth.auth_handler import decode_jwt, decode_jwt_admin
@@ -20,10 +21,11 @@ def verify_jwt(token):
 
 def verify_jwt_admin(token):
     try:
+        print(f'token: {token}')
         payload = decode_jwt_admin(token)
-    except:
+    except DecodeError:
         payload = {'is_valid': False,
-                   'message': 'Unknown error while decoding payload'}
+                   'message': 'Error when decoding payload'}
 
     return payload
 
@@ -54,7 +56,6 @@ class JWTBearerAdmin(HTTPBearer):
             if not credentials.scheme == "Bearer":
                 raise HTTPException(status_code=403, detail="Invalid authentication scheme.")
             jwt = verify_jwt_admin(credentials.credentials)
-            print(jwt)
             if not jwt['is_valid']:
                 raise HTTPException(status_code=403, detail=jwt['message'])
             return credentials.credentials

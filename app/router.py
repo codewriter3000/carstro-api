@@ -10,17 +10,13 @@ router = APIRouter()
 @router.post('/user/create') #, dependencies=[Depends(JWTBearerAdmin())])
 async def register_user(body: Request):
     payload = await body.json()
-    if payload['is_admin']:
-        return controller.register_user(payload['username'],
-                                        payload['password'],
-                                        payload['first_name'],
-                                        payload['last_name'],
-                                        payload['is_admin'])
-    else:
-        return controller.register_user(payload['username'],
-                                        payload['password'],
-                                        payload['first_name'],
-                                        payload['last_name'])
+
+    return controller.register_user(payload['username'],
+                                    payload['password'],
+                                    payload['first_name'],
+                                    payload['last_name'],
+                                    payload['is_admin'],
+                                    payload['is_enabled'])
 
 
 @router.post('/user/login')
@@ -38,12 +34,12 @@ async def logout_user():
 
 @router.get('/user/auth', dependencies=[Depends(JWTBearer())])
 async def check_authentication_status():
-    return {'message': 'Verified'}
+    return {'is_admin': True, 'message': 'Verified'}
 
 
 @router.get('/admin/auth', dependencies=[Depends(JWTBearerAdmin())])
 async def check_admin_authentication_status():
-    return {'message': 'Verified'}
+    return {'is_admin': True, 'message': 'Verified'}
 
 
 @router.get('/users/list')#, dependencies=[Depends(JWTBearerAdmin())])

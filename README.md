@@ -1,6 +1,10 @@
 # Carstro API
 ## Brief Description
 I am trying to build a basic boilerplate app for an admin panel. The front-end that goes along with this can be found here: https://github.com/codewriter3000/carstro
+## API Tech Stack
+- Python FastAPI: API library
+- PostgreSQL: Database
+- Psycopg2: Postgres driver library
 ## How to Setup
 1. Run `git clone https://github.com/codewriter3000/carstro-api`
 2. Run `python -m venv ./venv`

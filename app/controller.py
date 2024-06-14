@@ -1,5 +1,4 @@
 import secrets
-import sys
 from passlib.hash import pbkdf2_sha256
 from fastapi.responses import JSONResponse
 
@@ -146,7 +145,6 @@ def login_user(username, password):
 def logout_user():
     response = JSONResponse(content={'message': 'Logged out successfully'})
     response.set_cookie(key='token', value='', httponly=True)
-    print('user logged out')
 
     return response
 

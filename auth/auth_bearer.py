@@ -10,7 +10,7 @@ def verify_jwt(token):
 
     try:
         payload = decode_jwt(token)
-    except:
+    except DecodeError:
         payload = None
 
     if payload:
@@ -21,7 +21,6 @@ def verify_jwt(token):
 
 def verify_jwt_admin(token):
     try:
-        print(f'token: {token}')
         payload = decode_jwt_admin(token)
     except DecodeError:
         payload = {'is_valid': False,
